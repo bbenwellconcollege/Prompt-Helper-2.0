@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ask AI Helper</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f0f4ff;
+    --white: #ffffff;
+    --border: #d0d8f0;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --blue: #3b6ef8;
+    --blue-light: #eef2ff;
+    --blue-dark: #2a52cc;
+    --green: #16a34a;
+    --green-light: #f0fdf4;
+    --purple: #7c3aed;
+    --purple-light: #f5f3ff;
+    --orange: #ea580c;
+    --orange-light: #fff7ed;
+    --teal: #0d9488;
+    --teal-light: #f0fdfa;
+    --radius: 16px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  .container { max-width: 680px; margin: 0 auto; }
+
+  /* ── Header ── */
+  .hero {
+    background: var(--blue);
+    border-radius: 24px;
+    padding: 32px 28px;
+    margin-bottom: 28px;
+    color: white;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 80% 20%, #6b9ffb40 0%, transparent 60%),
+                radial-gradient(ellipse at 20% 80%, #1a3fa840 0%, transparent 60%);
+  }
+  .hero-emoji { font-size: 3rem; margin-bottom: 10px; display: block; position: relative; }
+  .hero h1 { font-size: 1.9rem; font-weight: 900; margin-bottom: 8px; position: relative; line-height: 1.2; }
+  .hero p { font-size: 1.05rem; opacity: 0.9; position: relative; line-height: 1.5; }
+
+  /* ── Step indicator ── */
+  .steps {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; margin-bottom: 24px;
+  }
+  .step-dot {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--white); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.9rem; color: var(--muted);
+    transition: all 0.3s; flex-shrink: 0;
+  }
+  .step-dot.done { background: var(--green); border-color: var(--green); color: white; }
+  .step-dot.active { background: var(--blue); border-color: var(--blue); color: white; box-shadow: 0 0 0 4px #3b6ef820; }
+  .step-line { flex: 1; height: 2px; background: var(--border); max-width: 48px; transition: background 0.3s; }
+  .step-line.done { background: var(--green); }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--white); border-radius: var(--radius);
+    border: 1.5px solid var(--border); padding: 24px;
+    margin-bottom: 16px; box-shadow: var(--shadow);
+    animation: fadeUp 0.3s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  }
+  .card-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; flex-shrink: 0;
+  }
+  .card-title { font-size: 1.1rem; font-weight: 800; }
+  .card-subtitle { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+
+  /* Field colors */
+  .c-blue   { background: var(--blue-light);   }
+  .c-purple { background: var(--purple-light);  }
+  .c-orange { background: var(--orange-light);  }
+  .c-teal   { background: var(--teal-light);    }
+  .c-green  { background: var(--green-light);   }
+
+  /* ── Form fields ── */
+  .field-label {
+    font-weight: 700; font-size: 0.95rem; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .field-label .emoji { font-size: 1.1rem; }
+
+  .field-input, .field-textarea, .field-select {
+    width: 100%; padding: 13px 16px;
+    border: 2px solid var(--border); border-radius: 12px;
+    font-family: 'Nunito', sans-serif; font-size: 1rem;
+    color: var(--text); background: var(--bg);
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    line-height: 1.5;
+  }
+  .field-input:focus, .field-textarea:focus, .field-select:focus {
+    border-color: var(--blue); box-shadow: 0 0 0 4px #3b6ef818; background: white;
+  }
+  .field-input::placeholder, .field-textarea::placeholder { color: #aab0c0; }
+  .field-textarea { resize: vertical; min-height: 80px; }
+  .field-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+  .field-hint {
+    margin-top: 6px; font-size: 0.82rem; color: var(--muted);
+    padding-left: 4px; line-height: 1.5;
+  }
+
+  /* Example chips */
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip {
+    background: white; border: 1.5px solid var(--border); border-radius: 20px;
+    padding: 4px 12px; font-size: 0.8rem; font-weight: 600; color: var(--muted);
+    cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+  .chip:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+  .chip:active { transform: scale(0.96); }
+
+  /* ── Preview ── */
+  .preview-card {
+    background: linear-gradient(135deg, #1a2a6e 0%, #3b6ef8 100%);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 16px;
+    box-shadow: var(--shadow-lg); color: white;
+  }
+  .preview-label {
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; opacity: 0.7; margin-bottom: 12px;
+  }
+  #promptOutput {
+    font-size: 1rem; line-height: 1.75; background: rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 16px; min-height: 60px;
+    border: 1px solid rgba(255,255,255,0.2); white-space: pre-wrap; word-break: break-word;
+  }
+  #promptOutput .blank { opacity: 0.4; font-style: italic; }
+
+  /* ── Buttons ── */
+  .btn-copy {
+    width: 100%; padding: 16px; border: none; border-radius: 14px;
+    background: var(--green); color: white;
+    font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.15rem;
+    cursor: pointer; transition: all 0.2s; margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    box-shadow: 0 4px 16px rgba(22,163,74,0.35);
+  }
+  .btn-copy:hover { background: #15803d; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(22,163,74,0.4); }
+  .btn-copy:active { transform: translateY(0); }
+  .btn-copy.copied { background: #15803d; }
+
+  /* ── AI Links ── */
+  .ai-section { margin-bottom: 8px; }
+  .ai-title {
+    font-weight: 800; font-size: 1rem; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ai-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ai-link {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px; border-radius: 14px; text-decoration: none;
+    font-weight: 700; font-size: 0.92rem; transition: all 0.2s;
+    border: 2px solid transparent; box-shadow: var(--shadow);
+  }
+  .ai-link:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .ai-link .ai-logo { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+  .ai-link .ai-info .ai-name { font-size: 0.95rem; font-weight: 800; }
+  .ai-link .ai-info .ai-desc { font-size: 0.75rem; font-weight: 600; opacity: 0.7; margin-top: 1px; }
+
+  .link-claude { background: #fdf6f0; border-color: #f0ddd0; color: #7c3a1a; }
+  .link-claude:hover { border-color: #d97706; }
+  .link-copilot { background: #f0f4ff; border-color: #c7d5f8; color: #1e3a8a; }
+  .link-copilot:hover { border-color: var(--blue); }
+  .link-chatgpt { background: #f0fdf4; border-color: #bbf7d0; color: #14532d; }
+  .link-chatgpt:hover { border-color: var(--green); }
+  .link-gemini { background: #fdf4ff; border-color: #e9d5ff; color: #581c87; }
+  .link-gemini:hover { border-color: var(--purple); }
+
+  .how-to {
+    background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px;
+    padding: 16px 18px; margin-top: 12px; font-size: 0.88rem; line-height: 1.7;
+    color: #78350f;
+  }
+  .how-to strong { font-weight: 800; }
+
+  /* ── Reset ── */
+  .btn-reset {
+    width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 12px;
+    background: transparent; color: var(--muted);
+    font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.9rem;
+    cursor: pointer; transition: all 0.2s; margin-top: 8px;
+  }
+  .btn-reset:hover { border-color: #aaa; color: var(--text); }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--green); color: white; padding: 12px 28px;
+    border-radius: 100px; font-weight: 800; font-size: 0.95rem;
+    opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 999;
+    box-shadow: 0 4px 20px rgba(22,163,74,0.4);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 480px) {
+    .ai-links { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <span class="hero-emoji">🤖</span>
+    <h1>Ask AI Helper</h1>
+    <p>Fill in the boxes below to build your question,<br>then copy and paste it into an AI!</p>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step-dot active" id="dot1">1</div>
+    <div class="step-line" id="line1"></div>
+    <div class="step-dot" id="dot2">2</div>
+    <div class="step-line" id="line2"></div>
+    <div class="step-dot" id="dot3">3</div>
+  </div>
+
+  <!-- ── STEP 1: Who should the AI be? ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon c-blue">🧑‍💼</div>
+      <div>
+        <div class="card-title">Step 1 — Who should the AI act like?</div>
+        <div class="card-subtitle">Give the AI a role so it answers in the right way</div>
+      </div>
+    </div>
+    <label class="field-label"><span class="emoji">💡</span> I want the AI to act like a…</label>
+    <input class="field-input" id="fieldRole" type="text" placeholder="e.g. friendly teacher" oninput="update()">
+    <div class="field-hint">This helps the AI give you the right kind of answer.</div>
+    <div class="examples">
+      <span class="chip" onclick="fill('fieldRole','friendly teacher')">friendly teacher</span>
+      <span class="chip" onclick="fill('fieldRole','helpful doctor')">helpful doctor</span>
+      <span class="chip" onclick="fill('fieldRole','career coach')">career coach</span>
+      <span class="chip" onclick="fill('fieldRole','supportive friend')">supportive friend</span>
+      <span class="chip" onclick="fill('fieldRole','cooking expert')">cooking expert</span>
+    </div>
+  </div>
+
+  <!-- ── STEP 2: What do you need? ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon c-purple">✏️</div>
+      <div>
+        <div class="card-title">Step 2 — What do you need help with?</div>
+        <div class="card-subtitle">Tell the AI what you want it to do</div>
+      </div>
+    </div>
+    <label class="field-label"><span class="emoji">🎯</span> I need help to…</label>
+    <input class="field-input" id="fieldTask" type="text" placeholder="e.g. write a letter" oninput="update()">
+    <div class="examples">
+      <span class="chip" onclick="fill('fieldTask','write a letter')">write a letter</span>
+      <span class="chip" onclick="fill('fieldTask','explain something to me')">explain something</span>
+      <span class="chip" onclick="fill('fieldTask','make a plan')">make a plan</span>
+      <span class="chip" onclick="fill('fieldTask','practice for a job interview')">practice interview</span>
+      <span class="chip" onclick="fill('fieldTask','find ideas')">find ideas</span>
+    </div>
+  </div>
+
+  <!-- ── STEP 3: What is it about? ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon c-orange">📝</div>
+      <div>
+        <div class="card-title">Step 3 — What is it about?</div>
+        <div class="card-subtitle">Give details so the AI understands your situation</div>
+      </div>
+    </div>
+    <label class="field-label"><span class="emoji">📖</span> The topic or details are…</label>
+    <textarea class="field-textarea" id="fieldContent" placeholder="e.g. I have a job interview at a grocery store next Tuesday and I'm nervous" oninput="update()"></textarea>
+    <div class="field-hint">The more you share, the better the AI can help you!</div>
+  </div>
+
+  <!-- ── STEP 4: How do you want the answer? ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon c-teal">📋</div>
+      <div>
+        <div class="card-title">Step 4 — How do you want the answer?</div>
+        <div class="card-subtitle">Choose how the AI should give you information</div>
+      </div>
+    </div>
+    <label class="field-label"><span class="emoji">📄</span> Please give me the answer as…</label>
+    <select class="field-select" id="fieldFormat" onchange="update()">
+      <option value="">— Pick one (optional) —</option>
+      <option value="simple steps I can follow">Simple steps I can follow</option>
+      <option value="a short easy-to-read paragraph">A short easy-to-read paragraph</option>
+      <option value="a bullet point list">A bullet point list</option>
+      <option value="a script I can read out loud">A script I can read out loud</option>
+      <option value="a letter I can send">A letter I can send</option>
+      <option value="a table or chart">A table or chart</option>
+      <option value="examples I can look at">Examples I can look at</option>
+    </select>
+  </div>
+
+  <!-- ── STEP 5: Any extra rules? ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon c-green">⚙️</div>
+      <div>
+        <div class="card-title">Step 5 — Any extra rules? <span style="font-weight:400;color:var(--muted);font-size:0.85rem">(optional)</span></div>
+        <div class="card-subtitle">Things you want the AI to keep in mind</div>
+      </div>
+    </div>
+    <label class="field-label"><span class="emoji">📌</span> Please remember to…</label>
+    <input class="field-input" id="fieldConstraints" type="text" placeholder="e.g. use simple words, keep it short" oninput="update()">
+    <div class="examples">
+      <span class="chip" onclick="fill('fieldConstraints','use simple words')">use simple words</span>
+      <span class="chip" onclick="fill('fieldConstraints','keep it short')">keep it short</span>
+      <span class="chip" onclick="fill('fieldConstraints','be encouraging and kind')">be encouraging</span>
+      <span class="chip" onclick="fill('fieldConstraints','give me an example')">give an example</span>
+    </div>
+  </div>
+
+  <!-- ── PREVIEW ── -->
+  <div class="preview-card">
+    <div class="preview-label">✨ Your prompt — ready to copy!</div>
+    <div id="promptOutput"></div>
+  </div>
+
+  <!-- Copy button -->
+  <button class="btn-copy" id="copyBtn" onclick="copyPrompt()">
+    <span id="copyIcon">📋</span>
+    <span id="copyText">Copy My Prompt!</span>
+  </button>
+
+  <!-- AI Links -->
+  <div class="card ai-section">
+    <div class="ai-title">🚀 Now paste your prompt into an AI!</div>
+    <div class="ai-links">
+      <a class="ai-link link-claude" href="https://claude.ai" target="_blank" rel="noopener">
+        <div class="ai-logo">🟠</div>
+        <div class="ai-info">
+          <div class="ai-name">Claude</div>
+          <div class="ai-desc">by Anthropic</div>
+        </div>
+      </a>
+      <a class="ai-link link-copilot" href="https://copilot.microsoft.com" target="_blank" rel="noopener">
+        <div class="ai-logo">🔵</div>
+        <div class="ai-info">
+          <div class="ai-name">Microsoft Copilot</div>
+          <div class="ai-desc">by Microsoft</div>
+        </div>
+      </a>
+      <a class="ai-link link-chatgpt" href="https://chat.openai.com" target="_blank" rel="noopener">
+        <div class="ai-logo">🟢</div>
+        <div class="ai-info">
+          <div class="ai-name">ChatGPT</div>
+          <div class="ai-desc">by OpenAI</div>
+        </div>
+      </a>
+      <a class="ai-link link-gemini" href="https://gemini.google.com" target="_blank" rel="noopener">
+        <div class="ai-logo">🟣</div>
+        <div class="ai-info">
+          <div class="ai-name">Gemini</div>
+          <div class="ai-desc">by Google</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="how-to">
+      <strong>How to use:</strong> Click a button above to open an AI → click on the chat box → paste your prompt (Ctrl+V or long-press → Paste) → press Enter!
+    </div>
+  </div>
+
+  <button class="btn-reset" onclick="resetAll()">🔄 Start Over</button>
+
+</div>
+<div class="toast" id="toast">✅ Copied! Now go paste it into an AI.</div>
+
+<script>
+  function update() {
+    const role        = v('fieldRole');
+    const task        = v('fieldTask');
+    const content     = v('fieldContent');
+    const format      = v('fieldFormat');
+    const constraints = v('fieldConstraints');
+
+    // Build prompt sentence by sentence
+    let parts = [];
+
+    if (role)        parts.push(`You are a ${role}.`);
+    if (task)        parts.push(`I need you to help me ${task}.`);
+    if (content)     parts.push(`Here are the details: ${content}`);
+    if (format)      parts.push(`Please give me the answer as: ${format}.`);
+    if (constraints) parts.push(`Also, please remember to: ${constraints}.`);
+
+    const out = document.getElementById('promptOutput');
+
+    if (!parts.length) {
+      out.innerHTML = '<span class="blank">Your prompt will appear here as you fill in the boxes above…</span>';
+    } else {
+      out.textContent = parts.join('\n\n');
+    }
+
+    // Step indicators
+    const hasStep1 = !!role;
+    const hasStep2 = !!task;
+    const hasStep3 = !!(content || format || constraints);
+
+    setStep(1, hasStep1);
+    setStep(2, hasStep2);
+    setStep(3, hasStep3);
+  }
+
+  function setStep(n, done) {
+    const dot = document.getElementById('dot' + n);
+    if (done) { dot.classList.add('done'); dot.textContent = '✓'; }
+    else {
+      dot.classList.remove('done');
+      dot.textContent = n;
+      if (!document.querySelector('.step-dot.done ~ #dot' + n)) dot.classList.add('active');
+    }
+    if (n < 3) {
+      const line = document.getElementById('line' + n);
+      line.classList.toggle('done', done);
+    }
+  }
+
+  function v(id) { return document.getElementById(id).value.trim(); }
+
+  function fill(id, val) {
+    document.getElementById(id).value = val;
+    document.getElementById(id).focus();
+    update();
+  }
+
+  function copyPrompt() {
+    const text = document.getElementById('promptOutput').textContent;
+    if (!text || text.includes('Your prompt will appear')) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      document.getElementById('copyIcon').textContent = '✅';
+      document.getElementById('copyText').textContent = 'Copied! Now paste it into an AI';
+      btn.classList.add('copied');
+      showToast();
+      setTimeout(() => {
+        document.getElementById('copyIcon').textContent = '📋';
+        document.getElementById('copyText').textContent = 'Copy My Prompt!';
+        btn.classList.remove('copied');
+      }, 3000);
+    });
+  }
+
+  function resetAll() {
+    ['fieldRole','fieldTask','fieldContent','fieldConstraints'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fieldFormat').value = '';
+    update();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showToast() {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // Init
+  update();
+</script>
+</body>
+</html>
